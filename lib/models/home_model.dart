@@ -1,7 +1,6 @@
 class Task {
   String title;
-  DateTime time;
+  String time;
   bool isCompleted;
-
   Task({required this.title, required this.time, this.isCompleted = false});
 }

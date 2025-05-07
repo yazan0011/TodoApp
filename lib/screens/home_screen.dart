@@ -1,116 +1,203 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_animations/flutter_staggered_animations.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 import 'package:todoapp/controller/home_controller.dart';
 import 'package:todoapp/models/home_model.dart';
 
-void main() {
-  runApp(GetMaterialApp(home: TodoApp()));
-}
-
-class TodoApp extends StatelessWidget {
+class TodoPage extends StatelessWidget {
   final TaskController controller = Get.put(TaskController());
-
-  TodoApp({super.key}) {
-    // Example tasks
-    controller.addTask(
-        Task(title: "Go to the gym", time: DateTime(2023, 8, 7, 10, 30)));
-    controller.addTask(
-        Task(title: "Study for the exam", time: DateTime(2023, 8, 7, 22, 28)));
-    controller.addTask(Task(
-        title: "sleep", time: DateTime(2023, 8, 7, 3, 5), isCompleted: true));
-  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.deepPurple.shade900,
-      appBar: AppBar(
-        backgroundColor: Colors.deepPurple.shade900,
-        elevation: 0,
-        title: const Text('My Todo List', style: TextStyle(fontSize: 24)),
-        centerTitle: true,
-      ),
-      body: Container(
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
-        ),
-        child: Column(
+      backgroundColor: Colors.grey.shade200,
+      body: Stack(children: [
+        Positioned(
+            child: Container(
+          padding: EdgeInsets.all(16),
+          margin: EdgeInsets.only(bottom: 500),
+          decoration: BoxDecoration(
+              color: Colors.teal,
+              borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(20),
+                  bottomRight: Radius.circular(20))),
+        )),
+        Column(
           children: [
-            const SizedBox(height: 10),
+            const SizedBox(height: 80),
+            const Text(
+              'My Todo List',
+              style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  fontFamily: 'WinkySans',
+                  color: Colors.white),
+            ),
+            const Text(
+              'Aug 7, 2023',
+              style: TextStyle(
+                  fontSize: 16, color: Colors.white70, fontFamily: 'WinkySans'),
+            ),
+            const SizedBox(height: 50),
             Expanded(
               child: Obx(() {
-                final incomplete = controller.incompleteTasks;
-                // final complete = controller.completedTasks;
-                return AnimatedList(
-                  key: GlobalKey<AnimatedListState>(),
-                  initialItemCount: incomplete.length,
-                  itemBuilder: (context, index, animation) {
-                    return _buildTaskTile(
-                        incomplete[index], index, animation, false);
-                  },
+                final incompleteTasks =
+                    controller.tasks.where((t) => !t.isCompleted).toList();
+                final completedTasks =
+                    controller.tasks.where((t) => t.isCompleted).toList();
+
+                return SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      // Incomplete Tasks
+                      _buildTaskSection('Incomplete', incompleteTasks, false),
+                      const SizedBox(height: 20),
+                      // Completed Tasks
+                      _buildTaskSection('Completed', completedTasks, true),
+                    ],
+                  ),
                 );
               }),
-            ),
-            const Padding(
-              padding: EdgeInsets.all(8.0),
-              child: Text("Completed",
-                  style: TextStyle(fontWeight: FontWeight.bold)),
-            ),
-            Expanded(
-              child: Obx(() {
-                final complete = controller.completedTasks;
-                return AnimatedList(
-                  key: GlobalKey<AnimatedListState>(),
-                  initialItemCount: complete.length,
-                  itemBuilder: (context, index, animation) {
-                    return _buildTaskTile(
-                        complete[index], index, animation, true);
-                  },
-                );
-              }),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: ElevatedButton(
-                onPressed: () {
-                  controller.addTask(Task(
-                    title: "New Task",
-                    time: DateTime.now(),
-                  ));
-                },
-                child: const Text("Add New Task"),
-              ),
             ),
           ],
         ),
-      ),
+        Positioned(
+            right: 20,
+            top: 25,
+            child: IconButton(
+              icon: Icon(
+                Icons.add,
+                size: 30,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                controller.addTask('New Task', TimeOfDay.now().format(context));
+              },
+            )),
+      ]),
     );
   }
 
-  Widget _buildTaskTile(
-      Task task, int index, Animation<double> animation, bool completed) {
-    return SizeTransition(
-      sizeFactor: animation,
-      child: Card(
-        color: completed ? Colors.deepPurple.shade100 : Colors.purple.shade100,
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        child: ListTile(
-          leading: Icon(
-            completed ? Icons.check_circle : Icons.favorite,
-            color: completed ? Colors.deepPurple : Colors.orange,
-          ),
-          title: Text(task.title,
-              style: const TextStyle(fontWeight: FontWeight.bold)),
-          subtitle: Text(DateFormat.jm().format(task.time)),
-          trailing: Checkbox(
-            value: task.isCompleted,
-            onChanged: (_) => controller.toggleTask(
-              controller.tasks.indexOf(task),
+  Widget _buildTaskSection(String title, List<Task> tasks, bool completed) {
+    if (completed && tasks.isEmpty) {
+      return const SizedBox(); // Return early if nothing to show
+    }
+
+    return AnimationLimiter(
+      child: Column(
+        children: [
+          Container(
+            margin: EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+            padding: EdgeInsets.symmetric(vertical: 16, horizontal: 0),
+            decoration: BoxDecoration(
+              color: const Color.fromARGB(255, 236, 236, 236),
+              border: Border.all(color: Colors.teal.shade400, width: 1),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color.fromARGB(255, 181, 181, 181),
+                  blurRadius: 10,
+                  offset: Offset(0, 6),
+                  spreadRadius: 2,
+                ),
+              ],
+              borderRadius: BorderRadius.circular(24),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (completed)
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    child: Center(
+                      child: Text(
+                        "Completed",
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 20,
+                          color: Colors.teal,
+                        ),
+                      ),
+                    ),
+                  ),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 500),
+                  child: Column(
+                    key: ValueKey(
+                        tasks.length), // Triggers rebuild when list changes
+                    children: List.generate(tasks.length, (index) {
+                      final task = tasks[index];
+                      return AnimationConfiguration.staggeredList(
+                        position: index,
+                        duration: const Duration(milliseconds: 500),
+                        child: SlideAnimation(
+                          verticalOffset: 50.0,
+                          child: FadeInAnimation(
+                            child: GestureDetector(
+                              onTap: () {
+                                final realIndex =
+                                    controller.tasks.indexOf(task);
+                                controller.toggleComplete(realIndex);
+                              },
+                              child: Container(
+                                margin: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 6),
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  color: completed
+                                      ? const Color.fromARGB(255, 255, 255, 255)
+                                      : Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      completed
+                                          ? Icons.done
+                                          : Icons.error_outline,
+                                      color: Colors.teal,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            task.title,
+                                            style: const TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold),
+                                          ),
+                                          Text(
+                                            task.time,
+                                            style: TextStyle(
+                                                color: Colors.grey[600]),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    Icon(
+                                      task.isCompleted
+                                          ? Icons.check_box
+                                          : Icons.check_box_outline_blank,
+                                      color: Colors.teal,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
+          SizedBox(height: 50)
+        ],
       ),
     );
   }

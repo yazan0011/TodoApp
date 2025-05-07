@@ -9,6 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_staggered_animations: ^1.1.1
   get: ^4.7.2
   intl: ^0.20.2
 
@@ -19,3 +20,15 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+
+  fonts:
+    - family: Caveat
+      fonts:
+        - asset: font/Caveat-Regular.ttf
+    - family: WinkySans
+      fonts:
+        - asset: font/WinkySans-Regular.ttf
+    - family: DMSerifDisplay
+      fonts:
+        - asset: font/DMSerifDisplay-Regular.ttf
